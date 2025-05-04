@@ -56,7 +56,7 @@ def check_roblox_redeem_code(username, password, redeem_code):
 
 # Example usage (replace with your credentials and code)
 if __name__ == "__main__":
-    username = "your_username"  # Replace with actual username
-    password = "your_password"  # Replace with actual password
+    username = "sayidzaltsz2"  # Replace with actual username
+    password = "Bozosayid1"  # Replace with actual password
     redeem_code = "example_code"  # Replace with the code to check
     check_roblox_redeem_code(username, password, redeem_code)
