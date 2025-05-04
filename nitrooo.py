@@ -1,103 +1,62 @@
-import random
 import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-# --- Luhn Algorithm ---
-def luhn_check(card_number):
-    digits = [int(d) for d in card_number[::-1]]
-    total = 0
-    for i, digit in enumerate(digits):
-        if i % 2 == 1:
-            doubled = digit * 2
-            total += doubled - 9 if doubled > 9 else doubled
-        else:
-            total += digit
-    return total % 10 == 0
-
-def generate_card_number(start_digit, total_length):
-    while True:
-        number_length = total_length - len(start_digit) - 1  # Leave space for check digit
-        body = start_digit + ''.join(random.choices('0123456789', k=number_length))
-        for check_digit in range(10):
-            candidate = body + str(check_digit)
-            if luhn_check(candidate):
-                return candidate
-
-# --- Fake Code Redemption System ---
-valid_codes = {
-    "FREE2025": "10% Discount",
-    "WELCOME50": "$5 Credit",
-    "GOLD123": "1 Month Premium"
-}
-
-def redeem_code(code):
-    code = code.strip().upper()
-    if code in valid_codes:
-        return f"✅ Code Redeemed: {valid_codes[code]}"
-    else:
-        return "❌ Invalid or Expired Code"
-
-# --- Main Menu ---
-def main():
-    print("\033[1;31m== BY SOLRA TOOLS ==")
-    print("== discord: solra0478 ==\033[0m")
-    print("====== MULTI TOOL ======")
-    print("1. Generate Card Numbers")
-    print("2. Check Card Number Validity")
-    print("3. Redeem a Code")
-    print("==========================")
-
-    mode = input("Choose mode (1-3): ")
-
-    if mode == "1":
-        print("\nCard Types:")
-        print("1. VISA")
-        print("2. MasterCard")
-        print("3. American Express")
-        print("=======================")
-
-        choice = input("Choose card type (1-3): ")
-        card_types = {
-            "1": ("VISA", "4", 16),
-            "2": ("MasterCard", "5", 16),
-            "3": ("Amex", "3", 15)
-        }
-
-        if choice in card_types:
-            try:
-                amount = int(input("How many cards to simulate?: "))
-                card_name, start_digit, length = card_types[choice]
-                print(f"\nGenerating {amount} {card_name} cards...\n")
-                time.sleep(1)
-                for _ in range(amount):
-                    card_number = generate_card_number(start_digit, length)
-                    exp_month = str(random.randint(1, 12)).zfill(2)
-                    exp_year = str(random.randint(25, 30))
-                    cvv_length = 4 if card_name == "Amex" else 3
-                    cvv = ''.join(random.choices('0123456789', k=cvv_length))
-                    print(f"{card_number} | {exp_month}/{exp_year} | CVV: {cvv} | Valid")
-                    time.sleep(0.2)
-            except ValueError:
-                print("\nInvalid number entered.")
-        else:
-            print("\nInvalid card type choice.")
-
-    elif mode == "2":
-        user_card = input("Enter card number to check: ").strip()
-        if user_card.isdigit():
-            if luhn_check(user_card):
-                print(f"\n{user_card} is VALID ✅")
+def check_roblox_redeem_code(username, password, redeem_code):
+    # Set up Selenium WebDriver (make sure ChromeDriver is installed and in PATH)
+    driver = webdriver.Chrome()  # Or use other drivers like Firefox
+    try:
+        # Open Roblox redeem page
+        driver.get("https://www.roblox.com/redeem")
+        
+        # Wait for login elements and log in
+        wait = WebDriverWait(driver, 10)
+        username_field = wait.until(EC.presence_of_element_located((By.ID, "login-username")))
+        password_field = driver.find_element(By.ID, "login-password")
+        login_button = driver.find_element(By.ID, "login-button")
+        
+        username_field.send_keys(username)
+        password_field.send_keys(password)
+        login_button.click()
+        
+        # Wait for login to complete (check for a logged-in element, e.g., user avatar or redeem form)
+        try:
+            # After login, the redeem form might appear; wait for it
+            redeem_input = wait.until(EC.presence_of_element_located((By.ID, "redeem-code-input")))  # This ID might not be exact; inspect the page after login
+            redeem_button = driver.find_element(By.ID, "redeem-button")  # Adjust based on actual HTML
+            
+            # Enter the redeem code and submit
+            redeem_input.send_keys(redeem_code)
+            redeem_button.click()
+            
+            # Wait for result (e.g., success or error message)
+            time.sleep(2)  # Short delay to allow page to update
+            result_element = driver.find_element(By.CLASS_NAME, "redeem-result")  # Hypothetical class; check actual HTML for success/error indicators
+            
+            # Parse result (this is simplistic; you'd need to inspect the page for actual elements)
+            if "success" in result_element.text.lower():  # Adjust based on real text or elements
+                print(f"✅ Code '{redeem_code}' is valid!")
             else:
-                print(f"\n{user_card} is INVALID ❌")
-        else:
-            print("\nInvalid input — only digits allowed.")
+                print(f"❌ Code '{redeem_code}' is invalid.")
+        
+        except TimeoutException:
+            print("❌ Redemption form not found or login failed. Ensure you're on the correct page.")
+        
+        except NoSuchElementException:
+            print("❌ Could not find redemption elements. Page structure might have changed.")
+    
+    except Exception as e:
+        print(f"Error: {str(e)}")
+    
+    finally:
+        driver.quit()  # Close the browser
 
-    elif mode == "3":
-        code = input("Enter redeem code: ")
-        result = redeem_code(code)
-        print(result)
-
-    else:
-        print("\nInvalid mode selected.")
-
+# Example usage (replace with your credentials and code)
 if __name__ == "__main__":
-    main()
+    username = "sayidzaltsz2"  # Replace with actual username
+    password = "Bozosayid1"  # Replace with actual password
+    redeem_code = "example_code"  # Replace with the code to check
+    check_roblox_redeem_code(username, password, redeem_code)
