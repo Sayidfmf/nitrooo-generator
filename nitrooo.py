@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 
 def luhn_checksum(card_number):
     def digits_of(n):
@@ -22,13 +23,32 @@ def generate_card_number(prefix, length):
     check_digit = (10 - checksum) % 10
     return number + str(check_digit)
 
+def generate_cvv():
+    # CVV is a random 3-digit number for Visa and Mastercard
+    return str(random.randint(100, 999))
+
+def generate_expiration_date():
+    # Hardcoded current date to May 4, 2025, based on system info
+    # Generates a future expiration date between now and 5 years ahead
+    now = datetime(2025, 5, 4)
+    future_date = now + timedelta(days=random.randint(1, 1825))  # 1825 days ≈ 5 years
+    exp_month = future_date.month
+    exp_year = future_date.year % 100  # YY format
+    return f"{exp_month:02d}/{exp_year:02d}"
+
 def generate_visa():
-    return generate_card_number("4", 16)
+    card_number = generate_card_number("4", 16)
+    cvv = generate_cvv()
+    expiration = generate_expiration_date()
+    return card_number, cvv, expiration
 
 def generate_mastercard():
     prefixes = [str(i) for i in range(51, 56)] + [str(i) for i in range(2221, 2721)]
     prefix = random.choice(prefixes)
-    return generate_card_number(prefix, 16)
+    card_number = generate_card_number(prefix, 16)
+    cvv = generate_cvv()
+    expiration = generate_expiration_date()
+    return card_number, cvv, expiration
 
 def print_header(title):
     print("\n" + "="*len(title))
@@ -38,25 +58,25 @@ def print_header(title):
 def main_menu():
     while True:
         print_header("Card Generator & Validator")
-        print("1. Generate Visa Card")
-        print("2. Generate Mastercard")
-        print("3. Check Card Validity")
+        print("1. Generate Visa Card (with CVV and Expiration)")
+        print("2. Generate Mastercard (with CVV and Expiration)")
+        print("3. Check Card Validity (Luhn check only)")
         print("4. Exit")
         choice = input("Select an option (1-4): ").strip()
 
         if choice == "1":
-            card = generate_visa()
-            print(f"Generated Visa Card: {card}")
+            card_number, cvv, expiration = generate_visa()
+            print(f"Generated Visa Card: Number: {card_number}, CVV: {cvv}, Expiration: {expiration}")
         elif choice == "2":
-            card = generate_mastercard()
-            print(f"Generated Mastercard: {card}")
+            card_number, cvv, expiration = generate_mastercard()
+            print(f"Generated Mastercard: Number: {card_number}, CVV: {cvv}, Expiration: {expiration}")
         elif choice == "3":
-            card = input("Enter card number to check: ").strip()
-            if card.isdigit():
-                valid = is_luhn_valid(card)
-                print(f"Card {card} is {'valid' if valid else 'invalid'}.")
+            card_input = input("Enter card number to check (ignore CVV/Expiration): ").strip()
+            if card_input.isdigit():
+                valid = is_luhn_valid(card_input)
+                print(f"Card {card_input} is {'valid' if valid else 'invalid'} (based on Luhn algorithm).")
             else:
-                print("Invalid input. Please enter only digits.")
+                print("Invalid input. Please enter only digits for the card number.")
         elif choice == "4":
             print("Exiting program.")
             break
