@@ -1,122 +1,66 @@
-import subprocess
-import sys
-import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+#!/bin/sh
 
-def install_dependencies():
-    # Install selenium via pip
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "selenium"])
-    # Install chromium-browser and chromedriver (Debian/Ubuntu)
-    subprocess.check_call(["sudo", "apt-get", "update"])
-    subprocess.check_call(["sudo", "apt-get", "install", "-y", "chromium-browser", "chromium-chromedriver"])
+# Colors
+RED='\033[1;31m'
+GRN='\033[0;32m'
+NC='\033[0m'
 
-def setup_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--user-data-dir=/tmp/chrome-profile")
-    # Use chromium binary if needed (uncomment if default Chrome not found)
-    # chrome_options.binary_location = "/usr/bin/chromium-browser"
-    driver = webdriver.Chrome(options=chrome_options)
-    return driver
+clear
+echo -e "${RED}Rewe Logs Generator - BY SOLRA${NC}"
+echo ""
 
-def handle_cookie_banner(driver):
-    time.sleep(1)  # Wait for banner to load
-    try:
-        cookie_accept_button = driver.find_element(By.CSS_SELECTOR, "button#accept-cookie-button, button.cookie-accept, button.cookie-banner-accept")
-        cookie_accept_button.click()
-        print("Cookie banner accepted.")
-    except Exception:
-        driver.execute_script("""
-            const banner = document.querySelector('div.cookie-banner-bg');
-            if (banner) { banner.style.display = 'none'; }
-        """)
-        print("Cookie banner overlay removed.")
+# Ask how many logs
+echo -n "How many REWE logs to generate? > "
+read AMOUNT
+echo ""
 
-def login_with_credentials(driver, username, password):
-    wait = WebDriverWait(driver, 10)
-          username_field = wait.until(EC.presence_of_element_located((By.ID, "login-username")))    password_field = driver.find_element(By.ID, "<input id="login-password" name="password" type="password" class="form-control input-field" placeholder="Password" value="">")
-    login_button = driver.find_element(By.ID, "<button type="button" id="login-button" class="btn-full-width login-button btn-secondary-md">Log In</button>")
+# Start loop
+i=1
+while [ $i -le $AMOUNT ]; do
+  RAND_ID=$((RANDOM % 1000))
+  POINTS=$((1000 + RANDOM % 49001))
 
-    username_field.send_keys(username)
-    password_field.send_keys(password)
-    login_button.click()
+  case $((RANDOM % 10 + 1)) in
+    1) FIRST="Jonas"; LAST="Becker";;
+    2) FIRST="Nico"; LAST="Keller";;
+    3) FIRST="Tom"; LAST="Meier";;
+    4) FIRST="Lukas"; LAST="Neumann";;
+    5) FIRST="Felix"; LAST="Brandt";;
+    6) FIRST="Sophie"; LAST="Koch";;
+    7) FIRST="Laura"; LAST="Richter";;
+    8) FIRST="Anna"; LAST="Hofmann";;
+    9) FIRST="Marie"; LAST="Lang";;
+    10) FIRST="Lea"; LAST="Scholz";;
+  esac
 
-def inject_cookies(driver, cookies):
-    driver.delete_all_cookies()
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-    driver.refresh()
+  DOMAIN=$( [ $((RANDOM % 2)) -eq 0 ] && echo "gmail.com" || echo "icloud.com" )
+  EMAIL=$(echo "$FIRST.$LAST$RAND_ID@$DOMAIN" | tr '[:upper:]' '[:lower:]')
 
-def check_roblox_redeem_code(username=None, password=None, redeem_code=None, cookies=None):
-    driver = setup_driver()
-    try:
-        driver.get("https://www.roblox.com/redeem")
-        handle_cookie_banner(driver)
+  case $((RANDOM % 4)) in
+    0) PASSWORD="${FIRST}${RANDOM}%";;
+    1) PASSWORD="${FIRST}${LAST}!$((RANDOM % 100))";;
+    2) PASSWORD="${FIRST}2024!";;
+    3) PASSWORD="Rewe$((RANDOM % 9999))";;
+  esac
 
-        if cookies:
-            inject_cookies(driver, cookies)
-            print("Cookies injected, session restored.")
-        elif username and password:
-            login_with_credentials(driver, username, password)
-        else:
-            print("No login method provided. Provide username/password or cookies.")
-            return
+  if [ $((RANDOM % 2)) -eq 0 ]; then
+    PREFIX="+49 157"
+    NUMBER=$((1000000 + RANDOM % 8999999))
+    PHONE="$PREFIX $NUMBER"
+  else
+    AREA=$((200 + RANDOM % 800))
+    EXCHANGE=$((100 + RANDOM % 900))
+    LINE=$((1000 + RANDOM % 9000))
+    PHONE="+1 $AREA-$EXCHANGE-$LINE"
+  fi
 
-        wait = WebDriverWait(driver, 10)
-        try:
-            redeem_input = wait.until(EC.presence_of_element_located((By.ID, "redeem-code-input")))  # Adjust if needed
-            redeem_button = driver.find_element(By.ID, "redeem-button")  # Adjust if needed
+  echo -e "${RED}[$i] Name:${NC} $FIRST $LAST"
+  echo -e "${RED}    Email:${NC} $EMAIL"
+  echo -e "${RED}    Password:${NC} $PASSWORD"
+  echo -e "${RED}    Phone:${NC} $PHONE"
+  echo -e "${RED}    Payback Points:${NC} $POINTS"
+  echo -e "${GRN}    [+] Account Status: VERIFIED${NC}"
+  echo ""
 
-            redeem_input.send_keys(redeem_code)
-            redeem_button.click()
-
-            time.sleep(2)  # Wait for result
-
-            result_element = driver.find_element(By.CLASS_NAME, "redeem-result")  # Adjust if needed
-            if "success" in result_element.text.lower():
-                print(f"✅ Code '{redeem_code}' is valid!")
-            else:
-                print(f"❌ Code '{redeem_code}' is invalid.")
-
-        except TimeoutException:
-            print("❌ Redemption form not found or login failed. Check page structure or login status.")
-        except NoSuchElementException:
-            print("❌ Redemption elements not found. Page structure may have changed.")
-
-    except Exception as e:
-        print(f"Error: {str(e)}")
-    finally:
-        driver.quit()
-
-if __name__ == "__main__":
-    # Uncomment the next line to install dependencies on first run
-    # install_dependencies()
-
-    # Example usage:
-    # Option 1: Login with username/password
-    username = "sayidzaltsz2"
-    password = "Bozosayid1"
-    redeem_code = "example_code"
-
-    # Option 2: Use cookies for faster login (example cookie format)
-    # cookies = [
-    #     {"name": ".ROBLOSECURITY", "value": "your_roblosecurity_cookie_value", "domain": ".roblox.com", "path": "/"},
-    #     # Add other cookies if needed
-    # ]
-
-    # Use either login or cookies:
-    check_roblox_redeem_code(username=username, password=password, redeem_code=redeem_code)
-    # Or with cookies:
-    # check_roblox_redeem_code(cookies=cookies, redeem_code=redeem_code)
+  i=$((i+1))
+done
