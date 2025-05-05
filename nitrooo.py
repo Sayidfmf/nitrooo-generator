@@ -46,8 +46,7 @@ def handle_cookie_banner(driver):
 
 def login_with_credentials(driver, username, password):
     wait = WebDriverWait(driver, 10)
-    username_field = wait.until(EC.presence_of_element_located((By.ID, "<input id="sayidzaltsz2" name="sayidzaltsz2" type="text" class="form-control input-field" autocomplete="username webauthn" placeholder="Username/Email/Phone" value="">")))
-    password_field = driver.find_element(By.ID, "<input id="login-password" name="password" type="password" class="form-control input-field" placeholder="Password" value="">")
+          username_field = wait.until(EC.presence_of_element_located((By.ID, "login-username")))    password_field = driver.find_element(By.ID, "<input id="login-password" name="password" type="password" class="form-control input-field" placeholder="Password" value="">")
     login_button = driver.find_element(By.ID, "<button type="button" id="login-button" class="btn-full-width login-button btn-secondary-md">Log In</button>")
 
     username_field.send_keys(username)
